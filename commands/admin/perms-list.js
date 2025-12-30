@@ -1,4 +1,3 @@
-// commands/admin/perms-list.js
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {

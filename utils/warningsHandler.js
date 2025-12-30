@@ -38,4 +38,10 @@ function borrarWarning(guildId, userId, idWarn) {
     return true;
 }
 
-module.exports = { agregarWarning, borrarWarning, cargarWarnings };
+function obtenerWarnings(guildId, userId) {
+    const datos = cargarWarnings();
+    const key = `${guildId}-${userId}`;
+    return datos[key] || []; // Devuelve el array de warns o un array vacío si no tiene
+}
+
+module.exports = { agregarWarning, borrarWarning, cargarWarnings, obtenerWarnings };
