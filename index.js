@@ -4,6 +4,59 @@ const path = require('node:path');
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
 const mongoose = require('mongoose');
 
+const cron = require('node-cron');
+const { buscarImagenPinterest } = require('./utils/pinterestHandler');
+const { getConfig } = require('./utils/imageConfig');
+const { EmbedBuilder } = require('discord.js');
+
+const esperar = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+
+cron.schedule('0 */4 * * *', async () => {
+    console.log('+ Iniciando despliegue de ráfaga de imágenes...');
+    const configs = getConfig();
+
+    for (const [guildId, config] of Object.entries(configs)) {
+        if (!config.active || !config.channelId) continue;
+
+        const guild = client.guilds.cache.get(guildId);
+        if (!guild) continue;
+
+        const channel = guild.channels.cache.get(config.channelId);
+        if (!channel) continue;
+
+        // BUCLE TÁCTICO: 10 IMÁGENES
+        for (let i = 0; i < 10; i++) {
+            try {
+                const imagenUrl = await buscarImagenPinterest();
+                
+                if (imagenUrl) {
+                    const embed = new EmbedBuilder()
+                        .setColor('#6400e6ff')
+                        .setTitle(`🎨 Drop de Pinterest #${i + 1}`)
+                        .setImage(imagenUrl)
+                        .setFooter({ text: 'Created by Yung Samy' })
+                        .setTimestamp();
+
+                    await channel.send({ embeds: [embed] });
+                }
+                
+                // SEGURIDAD: Esperar entre 5 y 10 segundos antes de la siguiente
+                // Esto evita bloqueos de IP en Pinterest
+                const tiempoEspera = Math.floor(Math.random() * (10000 - 5000 + 1) + 5000);
+                await esperar(tiempoEspera);
+
+            } catch (error) {
+                console.error(`Fallo en imagen ${i + 1}:`, error.message);
+                // Si falla, esperamos un poco más por seguridad
+                await esperar(10000); 
+            }
+        }
+        console.log(`✅ Ráfaga completada en ${guild.name}`);
+    }
+});
+
+
 const { execSync } = require('child_process');
 
 console.log("🔄 [Auto-Deploy] Iniciando actualización de comandos...");
