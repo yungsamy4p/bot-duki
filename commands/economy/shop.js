@@ -1,20 +1,15 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-
-// Configuración de la tienda (ID del rol : Precio)
-// IMPORTANTE: Cambia estos IDs por los roles reales de tu servidor DUKI
 const { cargarTienda } = require('../../utils/shopHandler');
-
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('shop')
         .setDescription('Muestra los artículos disponibles para comprar.'),
     
-    // Exportamos la lista para usarla en el comando 'buy' también
-    itemsTienda, 
+    // ⚠️ ELIMINAMOS LA LÍNEA 'itemsTienda,' QUE CAUSABA EL ERROR
 
     async execute(interaction) {
-
+        // Cargamos la tienda "en vivo" cada vez que alguien usa el comando
         const itemsTienda = cargarTienda();
 
         const embed = new EmbedBuilder()
@@ -22,13 +17,17 @@ module.exports = {
             .setTitle('🛒 Tienda del Servidor')
             .setDescription('Usa `/buy <nombre>` para comprar un artículo.');
 
-        itemsTienda.forEach(item => {
-            embed.addFields({ 
-                name: `${item.name}`, 
-                value: `💰 Precio: **$${item.price}**`, 
-                inline: true 
+        if (itemsTienda.length === 0) {
+            embed.setDescription('🚫 La tienda está vacía por el momento.\nDile a un administrador que use `/shop-admin crear` para añadir cosas.');
+        } else {
+            itemsTienda.forEach(item => {
+                embed.addFields({ 
+                    name: `${item.name}`, 
+                    value: `💰 Precio: **$${item.price}**`, 
+                    inline: true 
+                });
             });
-        });
+        }
 
         await interaction.reply({ embeds: [embed] });
     },
